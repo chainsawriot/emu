@@ -8,3 +8,8 @@ usage: emu.py [rom file]
 # Supported rom so far
 * .nes (NES)
 * .smc (SNES)
+* .zip (MAME)
+* .gbc (Gameboy Color)
+* .gb (Gameboy)
+* .gba (Gameboy Advance)
+* .pce (PC Engine)
