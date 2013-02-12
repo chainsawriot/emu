@@ -34,24 +34,34 @@ myscreen.keypad(1)
 
 def menuProcess(myscreen, allfiles):
     ###TODO: paging if too many files
-    myscreen.border(0)
     pos = 0
+    maxdisplay = 10
+    bigindex = 0
+    maxindex = len(allfiles) / maxdisplay
     keyinput = None
     x = None
     while x != ord('\n'):
+        myscreen.border(0)
         myscreen.addstr(1, 5, "Curses EMU STATION by Chainsaw Riot", curses.A_BOLD)
         myscreen.addstr(2, 5, "https://github.com/chainsawriot/emu")
         myscreen.addstr(3, 5, "- - - - - - - - - - - - - - - - - -")
-        for ind in range(len(allfiles)):
+        if bigindex == maxindex:
+            rangeend = len(allfiles) % maxdisplay
+            if pos >= rangeend:
+                pos = 0
+        else:
+            rangeend = maxdisplay
+        for ind in range(0, rangeend):
             if ind == pos:
-                myscreen.addstr(ind+4,5, allfiles[ind], curses.A_REVERSE)
+                myscreen.addstr(ind+4,5, allfiles[(bigindex*maxdisplay)+ind], curses.A_REVERSE)
             else:
-                myscreen.addstr(ind+4,5, allfiles[ind])
-        myscreen.addstr(len(allfiles)+5,5, "Arrow Key / Enter, q to quit")
+                myscreen.addstr(ind+4,5, allfiles[(bigindex*maxdisplay)+ind])
+        myscreen.addstr(maxdisplay+7,5, "page "+str(bigindex)+" / "+str(maxindex))
+        myscreen.addstr(maxdisplay+8,5, "Arrow Key / Enter, q to quit")
         myscreen.refresh()
         x = myscreen.getch()
         if x == 258:
-            if pos < len(allfiles):
+            if pos < maxdisplay:
                 pos += 1
             else:
                 pos = 0
@@ -59,13 +69,25 @@ def menuProcess(myscreen, allfiles):
             if pos > 0:
                 pos -= 1
             else:
-                pos = len(allfiles)
+                pos = maxdisplay
         elif x == ord("q"):
             curses.endwin()
             sys.exit()
+        elif x == 261:
+            if bigindex != maxindex:
+                bigindex += 1
+            else:
+                bigindex = 0
+            myscreen.clear()
+        elif x == 260:
+            if bigindex > 0:
+                bigindex -= 1
+            else:
+                bigindex = maxindex
+            myscreen.clear()
         elif x != ord('\n'):
             curses.flash()
-    return allfiles[pos]
+    return allfiles[(bigindex * maxdisplay)+pos]
 romfile = menuProcess(myscreen, allfiles)
 
 curses.endwin()
