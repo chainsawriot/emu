@@ -30,14 +30,16 @@ class frontend():
         return allfiles
 
     def __init__(self):
-        myscreen = curses.initscr()
-        curses.noecho()
-        curses.cbreak()
-        myscreen.keypad(1)
         allfiles = self.getAllRoms(self.basedir, self.libretroPath)
-        romfile = self.menuProcess(myscreen, allfiles)
-        curses.endwin()
-        os.system("retroarch -L "+self.libretroPath[self.detectRom(romfile, self.libretroPath)]['path']+" "+self.basedir+"/'"+str(romfile)+"'")
+        while 1:
+            myscreen = curses.initscr()
+            curses.noecho()
+            curses.cbreak()
+            myscreen.keypad(1)
+            myscreen.clear()
+            romfile = self.menuProcess(myscreen, allfiles)
+            curses.endwin()
+            os.system("retroarch -L "+self.libretroPath[self.detectRom(romfile, self.libretroPath)]['path']+" "+self.basedir+"/'"+str(romfile)+"'")
 
 
     def menuProcess(self, myscreen, allfiles):
