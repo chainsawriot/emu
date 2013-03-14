@@ -4,6 +4,8 @@ import os
 import sys
 import re
 import pygame
+import StringIO
+import ConfigParser
 
 class frontend():
     basedir="/home/pi/RetroPie/roms/nes"
@@ -13,11 +15,14 @@ class frontend():
         "mame": {"path": "/home/pi/RetroPie/emulatorcores/imame4all-libretro/libretro.so", "regex": r'\.zip$'},
         "gb": {"path": "/home/pi/RetroPie/emulatorcores/gambatte-libretro/libgambatte/libretro.so", "regex": r'\.gbc?$'},
         "pce": {"path": "/home/pi/RetroPie/emulatorcores/mednafen-pce-libretro/libretro.so", "regex": r'\.pce$'},
-        "gba": {"path": "/home/pi/RetroPie/emulatorcores/vba-next/libretro.so", "regex": r'\.gba$'}
+        "gba": {"path": "/home/pi/RetroPie/emulatorcores/vba-next/libretro.so", "regex": r'\.gba$'},
+        "sms": {"path": "/home/pi/code/emu/libretro/genesis_plus_gx_libretro.so", "regex": r'\.sms$'}
         }
+    retroarchcfg = "/home/pi/.retroarch.cfg"
     maxdisplay = 19
     joy = []
     filterby = None
+    joyKeysHash = dict()
     def combiningRegex(self, libretroPath):
         final = ""
         for key in libretroPath:
@@ -39,7 +44,11 @@ class frontend():
 #        print "n%d joystick(s) detected." % pygame.joystick.get_count()
 
 #            print "Joystick %d: " % (i) + self.joy[i].get_name()
-
+        try:
+            self.joyKeysHash = self.joyHashGen()
+        except:
+            print "Cannot open or parse: "+retroarchcfg
+            quit()
         while 1:
             for i in range(pygame.joystick.get_count()):
                 myjoy = pygame.joystick.Joystick(i)
@@ -79,8 +88,27 @@ class frontend():
                 os.system("retroarch -L "+self.libretroPath[self.detectRom(romfile, self.libretroPath)]['path']+" "+self.basedir+"/'"+str(romfile)+"'")
 
 
+    #joyKeysHash = {0: "up", 1: "down", 3: "right", 2: "left", 4: "confirm", 13: "confirm", 14: "quit", 5: "refresh", 6:"filter"}
+    def joyHashGen(self):
+        c = StringIO.StringIO()
+        c.write("[retroarch]\n")
+        c.write(open(self.retroarchcfg, 'r').read())
+        c.seek(0, os.SEEK_SET)
+        cp = ConfigParser.ConfigParser()
+        cp.readfp(c)
+        a = ['input_player1_left_btn', 'input_player1_right_btn', 'input_player1_up_btn' ,'input_player1_down_btn', 'input_player1_b_btn', 'input_player1_y_btn', 'input_player1_a_btn', 'input_player1_select_btn']
+        jKHValue = ['left', 'right', 'up', 'down', 'confirm', 'filter', 'refresh', 'quit']
+        print a
+        keypairnum = len(a)
+        joyKeysHash = dict()
+        for i in range(0, keypairnum):
+            keycode = int(re.sub(r'"', r'', cp.get('retroarch', a[i])))
+            joyKeysHash[keycode] = jKHValue[i]
+        if cp.has_option('retroarch', 'input_exit_emulator_btn'):
+            joyKeysHash[int(re.sub(r'"', r'', cp.get('retroarch', 'input_exit_emulator_btn')))] = 'quit'
+        c.close()
+        return joyKeysHash
 
-    joyKeysHash = {0: "up", 1: "down", 3: "right", 2: "left", 4: "confirm", 13: "confirm", 14: "quit", 5: "refresh", 6:"filter"}
     def joystickListener(self):
         while True:
             e = pygame.event.wait()
